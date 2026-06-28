@@ -127,7 +127,8 @@
 
     <div class="card"><h2>👟 Cardio</h2><div id="cardio"></div></div>
 
-    <div class="card"><h2>🍽️ Meals</h2><div id="meals"></div></div>
+    <div class="card"><h2>🍽️ Meals</h2><div id="meals"></div>
+      <div class="hint" id="saladNote" style="margin-top:10px;border-top:1px solid var(--line);padding-top:10px"></div></div>
 
     <div class="seg" style="margin-bottom:12px">
       <button class="btn" onclick="go('rest')">⏱️ Rest Timer</button>
@@ -203,54 +204,75 @@
 <script>
 /* ---------- DATA ---------- */
 const DAYS = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+// 🥗 SALAD = the side referenced in meals
+const SALAD = "🥗 Salad (250g) = tomato 100g + cucumber 80g + onion 30g + green pepper 40g + olive oil 10g (1 tbsp) + lemon juice + parsley. Smaller side = ~150g (halve it).";
 const PLAN = {
   1:{name:"PUSH",focus:"Chest · Shoulders · Triceps",color:"#22c55e",rest:false,time:"18:00",
     workout:[["Bench press","4 × 6-8"],["Incline dumbbell press","3 × 8-12"],["Shoulder press","3 × 8-12"],
       ["Lateral raises","3 × 12-15"],["Triceps pushdown","3 × 10-12"],["Overhead triceps ext.","2 × 12-15"]],
     cardio:[["Incline walk","15-20 min after weights (5 km/h, 8-10%)"],["Steps","reach 10,000 today"]],
-    meals:[["07:30 Breakfast","3 eggs + 1 white, 50g oats, 1 banana"],["11:00 Snack","200g yogurt + 25g almonds"],
-      ["13:30 Lunch","150g chicken + 70g rice + salad"],["17:00 Pre-train","1 banana + 4 dates"],
-      ["19:30 Post-train","1 tuna can + 2 slices pain complet"],["21:30 Dinner","Shakshuka (3 eggs) + salad"]]},
+    meals:[["07:30 Breakfast","3 eggs (165g) + 1 white (35g), oats 50g dry, milk 200ml, 1 banana (120g)"],
+      ["11:00 Snack","Yogurt 200g + almonds 25g"],
+      ["13:30 Lunch","Chicken breast 150g raw + rice 70g dry (~210g cooked) + salad 250g"],
+      ["17:00 Pre-train","1 banana (120g) + dates 30g (4)"],
+      ["19:30 Post-train","Tuna 100g (drained) + pain complet 60g (2 slices)"],
+      ["21:30 Dinner","Shakshuka: 3 eggs (165g) + tomato 200g + pepper 100g + olive oil 10g; side salad 150g"]]},
   2:{name:"PULL",focus:"Back · Biceps · Rear delts",color:"#22c55e",rest:false,time:"18:00",
     workout:[["Lat pulldown / pull-ups","4 × 8-10"],["Seated cable row","4 × 8-10"],["Face pulls","3 × 15"],
       ["Dumbbell curl","3 × 10-12"],["Hammer curl","3 × 10-12"],["Shrugs","2 × 12-15"]],
     cardio:[["Steps","just reach 10,000 today (no extra walk needed)"]],
-    meals:[["07:30 Breakfast","3-egg omelette, 1 slice pain complet, 1 apple"],["11:00 Snack","1 tuna can + tomato/onion salad"],
-      ["13:30 Lunch","150g lean mince + 1 potato + veg"],["17:00 Pre-train","1 banana + 4 dates"],
-      ["19:30 Post-train","200g yogurt + 25g almonds"],["21:30 Dinner","Kefta tagine (no bread) + veg"]]},
+    meals:[["07:30 Breakfast","3-egg omelette (165g) + pain complet 30g (1 slice) + 1 apple (150g)"],
+      ["11:00 Snack","Tuna 100g + salad 200g"],
+      ["13:30 Lunch","Lean mince 5% 150g raw + potato 250g + veg 150g"],
+      ["17:00 Pre-train","1 banana (120g) + dates 30g (4)"],
+      ["19:30 Post-train","Yogurt 200g + almonds 25g"],
+      ["21:30 Dinner","Kefta (lean mince) 150g + vegetables 200g (no bread)"]]},
   3:{name:"LEGS",focus:"Quads · Hamstrings · Calves",color:"#22c55e",rest:false,time:"18:00",
     workout:[["Back squat","4 × 6-8"],["Romanian deadlift","3 × 8-10"],["Leg press","3 × 10-12"],
       ["Leg curl","3 × 12-15"],["Standing calf raise","4 × 12-15"]],
     cardio:[["Easy incline walk","15-20 min after legs"],["Steps","reach 10,000 today"]],
-    meals:[["07:30 Breakfast","50g oats + milk + banana + whey/3 eggs"],["11:00 Snack","200g fromage blanc + walnuts"],
-      ["13:30 Lunch","150g chicken + 70g rice + salad"],["17:00 Pre-train","1 banana + 4 dates (fuel up)"],
-      ["19:30 Post-train","1 tuna can + pain complet"],["21:30 Dinner","Grilled sardines + salad + small rice"]]},
-  4:{name:"REST",focus:"Active recovery — big step day",color:"#38bdf8",rest:true,time:"",
-    workout:[],
-    cardio:[["Steps","12,000 – 14,000 (your fat-loss day)"],["Brisk walk","30-40 min, one session"],["Mobility","10 min stretching"]],
-    meals:[["07:30 Breakfast","3 eggs + 1 slice pain complet + 1 orange"],["11:00 Snack","200g yogurt + 20g almonds"],
-      ["13:30 Lunch","150g lean mince + 60g rice + veg"],["17:00 Snack","1 apple + 20g almonds"],
-      ["21:30 Dinner","Harira (lentils+chickpeas) + 150g chicken"]]},
-  5:{name:"UPPER",focus:"Whole upper body",color:"#22c55e",rest:false,time:"18:00",
+    meals:[["07:30 Breakfast","Oats 60g dry + milk 250ml + 1 banana (120g) + whey 30g (or 3 eggs 165g)"],
+      ["11:00 Snack","Fromage blanc 200g + walnuts 25g"],
+      ["13:30 Lunch","Chicken 150g raw + rice 70g dry + salad 250g"],
+      ["17:00 Pre-train","1 banana (120g) + dates 30g (4) — fuel up"],
+      ["19:30 Post-train","Tuna 100g + pain complet 60g"],
+      ["21:30 Dinner","Sardines 120g + salad 200g + rice 50g dry"]]},
+  4:{name:"UPPER",focus:"Whole upper body",color:"#22c55e",rest:false,time:"18:00",
     workout:[["Incline barbell/DB press","4 × 8-10"],["Chest-supported row","4 × 8-10"],["Lateral raises","3 × 12-15"],
       ["Lat pulldown","3 × 10-12"],["Triceps pushdown","3 × 12"],["Biceps curl","3 × 12"]],
     cardio:[["Incline walk","15-20 min after weights"],["Steps","reach 10,000 today"]],
-    meals:[["07:30 Breakfast","3 eggs + 50g oats + 1 banana"],["11:00 Snack","1 tuna can on pain complet"],
-      ["13:30 Lunch","150g chicken + 1 sweet potato + salad"],["17:00 Pre-train","1 banana + 4 dates"],
-      ["19:30 Post-train","Whey shake or 200g yogurt"],["21:30 Dinner","Grilled fish + veg + small rice"]]},
-  6:{name:"LOWER",focus:"Glutes · Hamstrings · Abs",color:"#22c55e",rest:false,time:"18:00",
+    meals:[["07:30 Breakfast","3 eggs (165g) + oats 50g dry + 1 banana (120g)"],
+      ["11:00 Snack","Tuna 100g on pain complet 60g"],
+      ["13:30 Lunch","Chicken 150g raw + sweet potato 250g + salad 250g"],
+      ["17:00 Pre-train","1 banana (120g) + dates 30g (4)"],
+      ["19:30 Post-train","Whey 30g + 1 banana (or yogurt 200g)"],
+      ["21:30 Dinner","White fish 150g + vegetables 200g + rice 50g dry"]]},
+  5:{name:"LOWER",focus:"Glutes · Hamstrings · Abs",color:"#22c55e",rest:false,time:"18:00",
     workout:[["Deadlift or hip thrust","4 × 6-8"],["Front squat / leg press","3 × 10-12"],["Walking lunges","3 × 12/leg"],
       ["Leg extension","3 × 15"],["Seated calf raise","4 × 15"],["Hanging leg raise (abs)","3 × 15"]],
     cardio:[["Optional HIIT finisher","8-10 min bike/rower"],["Steps","reach 10,000 today"]],
-    meals:[["07:30 Breakfast","4 eggs + 1 slice pain complet + 1 banana"],["11:00 Snack","200g yogurt + 25g almonds"],
-      ["13:30 Lunch","1 tuna can + 70g pasta + salad"],["17:00 Pre-train","1 banana + 4 dates"],
-      ["19:30 Post-train","Tuna or whey shake"],["21:30 Dinner","Chicken tagine + vegetables"]]},
+    meals:[["07:30 Breakfast","4 eggs (220g) + pain complet 30g (1 slice) + 1 banana (120g)"],
+      ["11:00 Snack","Yogurt 200g + almonds 25g"],
+      ["13:30 Lunch","Tuna 100g + pasta 70g dry + salad 250g"],
+      ["17:00 Pre-train","1 banana (120g) + dates 30g (4)"],
+      ["19:30 Post-train","Tuna 100g (or whey 30g)"],
+      ["21:30 Dinner","Chicken 150g (tagine) + vegetables 200g"]]},
+  6:{name:"REST",focus:"Active recovery — big step day",color:"#38bdf8",rest:true,time:"",
+    workout:[],
+    cardio:[["Steps","12,000 – 14,000 (your fat-loss day)"],["Brisk walk","30-40 min, one session"],["Mobility","10 min stretching"]],
+    meals:[["07:30 Breakfast","3 eggs (165g) + pain complet 30g (1 slice) + 1 orange (130g)"],
+      ["11:00 Snack","Yogurt 200g + almonds 20g"],
+      ["13:30 Lunch","Lean mince 150g raw + rice 60g dry + veg 150g"],
+      ["17:00 Snack","1 apple (150g) + almonds 20g"],
+      ["21:30 Dinner","Harira: lentils 60g dry + chickpeas 40g dry + tomato 150g; side chicken 120g"]]},
   0:{name:"REST",focus:"Full rest + meal prep",color:"#38bdf8",rest:true,time:"",
     workout:[],
     cardio:[["Steps","12,000 – 14,000"],["Easy walk","30-40 min"]],
-    meals:[["07:30 Breakfast","3 eggs + beans (loubia) + 1 orange"],["11:00 Snack","200g fromage blanc + walnuts"],
-      ["13:30 Lunch","Lentils + 150g chicken + salad"],["17:00 Snack","1 apple + 20g almonds"],
-      ["21:30 Dinner","Eggs + vegetables (light)"]]}
+    meals:[["07:30 Breakfast","3 eggs (165g) + white beans/loubia 150g + 1 orange (130g)"],
+      ["11:00 Snack","Fromage blanc 200g + walnuts 20g"],
+      ["13:30 Lunch","Lentils 70g dry + chicken 120g raw + salad 200g"],
+      ["17:00 Snack","1 apple (150g) + almonds 20g"],
+      ["21:30 Dinner","2 eggs (110g) + vegetables 200g (light)"]]}
 };
 const SHOP = [
   ["Protein",["30 eggs","1.5 kg chicken breast","7 tuna cans","2 cans sardines","700 g lean mince",
@@ -304,6 +326,7 @@ function renderToday(){
     p.cardio.map((e,i)=>chkRow(e[0],e[1],dkey()+':c'+i)).join('');
   document.getElementById('meals').innerHTML =
     p.meals.map((e,i)=>chkRow(e[0],e[1],dkey()+':m'+i)).join('');
+  document.getElementById('saladNote').textContent = SALAD;
 
   // steps + water
   const stepGoal = p.rest?13000:10000;
