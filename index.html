@@ -101,6 +101,7 @@
   <!-- ================= TODAY ================= -->
   <section id="v-today">
     <div class="card" id="dayHead"></div>
+    <div class="card" id="dayMacros"></div>
 
     <div class="grid2">
       <div class="stat">
@@ -317,6 +318,17 @@ function renderToday(){
   document.getElementById('woTime').textContent = p.time||'';
   document.getElementById('woTime').style.display = p.time?'inline-block':'none';
 
+  const mg=macros(p.rest);
+  document.getElementById('dayMacros').innerHTML =
+    `<h2 style="margin-bottom:8px">🎯 Today's Goal${p.rest?' · rest day':''}</h2>
+     <div class="macros">
+       <div class="m"><div class="mv">${mg.cal}</div><div class="ml">kcal</div></div>
+       <div class="m"><div class="mv">${mg.pro}g</div><div class="ml">Protein</div></div>
+       <div class="m"><div class="mv">${mg.carb}g</div><div class="ml">Carbs</div></div>
+       <div class="m"><div class="mv">${mg.fat}g</div><div class="ml">Fat</div></div>
+     </div>
+     <div class="hint" style="margin-top:8px">Based on ${LS.get('bw',75)} kg. Change weight/goal in the 👤 Me tab.</div>`;
+
   const wo=document.getElementById('workout');
   wo.innerHTML = p.workout.length
     ? p.workout.map((e,i)=>chkRow(e[0],'',dkey()+':w'+i,e[1])).join('')
@@ -385,18 +397,24 @@ function resetToday(){const m=LS.get('chk',{});Object.keys(m).forEach(k=>{if(k.s
 function saveMe(){
   const bw=parseFloat(document.getElementById('bw').value)||0;
   LS.set('bw',bw||75); LS.set('goal',document.getElementById('goal').value);
-  renderMacros();
+  renderMacros(); renderToday();
+}
+function macros(rest){
+  const bw=+LS.get('bw',75); const adj=+LS.get('goal',-300);
+  const maint=Math.round(33*bw);
+  let cal=maint+adj; if(rest) cal-=160;            // rest day ≈ 40g fewer carbs
+  const pro=Math.round(2.2*bw), fat=Math.round(0.8*bw);
+  const carb=Math.max(0,Math.round((cal-pro*4-fat*9)/4));
+  return {bw,adj,maint,cal:Math.round(cal),pro,fat,carb};
 }
 function renderMacros(){
-  const bw=+LS.get('bw',75); const adj=+LS.get('goal',-300);
-  const maint=Math.round(33*bw); const cal=Math.round(maint+adj);
-  const pro=Math.round(2.2*bw); const fat=Math.round(0.8*bw);
-  const carb=Math.max(0,Math.round((cal-pro*4-fat*9)/4));
+  const t=macros(false), r=macros(true);
   document.getElementById('macroBox').innerHTML=
-    [['kcal',cal],['Protein',pro+'g'],['Fat',fat+'g'],['Carbs',carb+'g']].map(x=>
+    [['kcal',t.cal],['Protein',t.pro+'g'],['Fat',t.fat+'g'],['Carbs',t.carb+'g']].map(x=>
       `<div class="m"><div class="mv">${x[1]}</div><div class="ml">${x[0]}</div></div>`).join('');
   document.getElementById('calLine').innerHTML=
-    `Maintenance ≈ <b>${maint}</b> kcal · target <b>${cal}</b> (${adj>0?'+':''}${adj}). Protein over 4 meals ≈ ${Math.round(pro/4)}g each.`;
+    `Maintenance ≈ <b>${t.maint}</b> kcal · training-day target <b>${t.cal}</b> (${t.adj>0?'+':''}${t.adj}). `+
+    `Rest days ≈ <b>${r.cal}</b> kcal (carbs ${r.carb}g). Protein over 4-5 meals ≈ ${Math.round(t.pro/4)}g each.`;
 }
 
 /* ---------- REST TIMER ---------- */
