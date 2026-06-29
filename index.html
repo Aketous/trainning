@@ -77,6 +77,17 @@
   .toast.show{opacity:1;}
   .dot{width:8px;height:8px;border-radius:50%;background:var(--line);}
   .dot.on{background:var(--grn);}
+  .modal{position:fixed;inset:0;z-index:60;background:rgba(0,0,0,.6);display:flex;align-items:flex-end;justify-content:center;}
+  .modal.hide{display:none;}
+  .sheet{background:var(--card);width:100%;max-width:560px;max-height:86vh;overflow:auto;
+    border-radius:20px 20px 0 0;padding:18px 16px calc(24px + var(--safe-b));border:1px solid var(--line);}
+  .sheet h2{margin:0 0 4px;font-size:19px;}
+  .sheet .x{float:right;background:var(--card2);border:1px solid var(--line);color:var(--txt);
+    border-radius:10px;width:36px;height:36px;font-size:16px;font-weight:700;cursor:pointer;}
+  .rtitle{font-weight:800;font-size:16px;margin:10px 0 4px;color:var(--grn);}
+  .sheet b{display:block;margin-top:12px;color:var(--cyan);font-size:12px;text-transform:uppercase;letter-spacing:.6px;}
+  .sheet ul,.sheet ol{margin:6px 0 4px;padding-left:20px;line-height:1.65;}
+  .sheet li{margin:4px 0;}
 </style>
 </head>
 <body>
@@ -202,11 +213,60 @@
 
 <div class="toast" id="toast"></div>
 
+<div class="modal hide" id="modal" onclick="if(event.target===this)closeModal()">
+  <div class="sheet"><div id="modalBody"></div></div>
+</div>
+
 <script>
 /* ---------- DATA ---------- */
 const DAYS = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
 // 🥗 SALAD = the side referenced in meals
 const SALAD = "🥗 Salad (250g) = tomato 100g + cucumber 80g + onion 30g + green pepper 40g + olive oil 10g (1 tbsp) + lemon juice + parsley. Smaller side = ~150g (halve it).";
+const RECIPES=[
+ {k:['shakshuka'],title:'Shakshuka',time:'~20 min',
+  ing:['Olive oil 10g (1 tbsp)','Onion 40g, chopped','Green pepper 100g, sliced','Tomato 200g chopped (or 1/2 can)','1 garlic clove','1 tsp paprika, 1/2 tsp cumin, salt','3 eggs'],
+  steps:['Heat oil, soften onion + pepper 5 min.','Add garlic, tomato, paprika, cumin, salt. Simmer 8-10 min until thick.','Make 3 wells and crack an egg into each.','Cover and cook 5-6 min until whites set but yolks soft. Serve.']},
+ {k:['omelette','omelet'],title:'Egg omelette',time:'~5 min',
+  ing:['3 eggs','Splash of milk','Salt & pepper','Spray of olive oil','Optional: tomato / onion / pepper'],
+  steps:['Beat eggs with milk, salt and pepper.','Heat pan on medium with a little oil.','Pour in eggs, let set, gently push the edges in for 1-2 min.','Add any fillings, fold in half, cook 1 min more.']},
+ {k:['oats'],title:'Oat porridge',time:'~4 min',
+  ing:['Oats 50-60g','Milk 200-250ml','1 banana, sliced','Pinch of cinnamon'],
+  steps:['Combine oats + milk in a bowl or pot.','Microwave 2 min (stir halfway) or simmer 4 min, stirring.','Top with banana + cinnamon. Stir in whey only after it cools, if using.']},
+ {k:['kefta'],title:'Kefta (spiced meatballs)',time:'~15 min',
+  ing:['Lean mince 150g','2 tbsp grated onion','Chopped parsley / coriander','1/2 tsp cumin, 1/2 tsp paprika, salt'],
+  steps:['Mix mince with onion, herbs and spices.','Shape into small ovals or balls.','Pan-sear or grill 8-10 min, turning, until cooked through.','For tagine: simmer the kefta in a light tomato sauce 10 min (optionally crack an egg on top).']},
+ {k:['harira'],title:'Harira (lentil & chickpea soup)',time:'~40 min',
+  ing:['Lentils 60g','Chickpeas 40g (soaked or canned)','Tomato 150g + 1 tbsp tomato paste','Onion + 1 celery stalk, chopped','1/2 tsp turmeric, ginger, salt','Parsley / coriander'],
+  steps:['Soften onion + celery in a little oil 4 min.','Add tomato, paste and spices; cook 3 min.','Add lentils, chickpeas and ~700 ml water.','Simmer 35-40 min until lentils are soft. Finish with herbs.']},
+ {k:['sardine'],title:'Grilled sardines (chermoula)',time:'~12 min',
+  ing:['Fresh sardines 120g, cleaned','1 garlic clove, minced','1/2 tsp cumin, 1/2 tsp paprika','Juice of 1/2 lemon, salt, parsley','1 tsp olive oil'],
+  steps:['Mix garlic, spices, lemon, parsley and oil into a chermoula.','Coat the sardines and marinate 15 min.','Grill or pan on high 3-4 min each side until charred and cooked.']},
+ {k:['tagine'],title:'Chicken tagine',time:'~30 min',
+  ing:['Chicken 150g','Onion 50g, sliced','1 garlic clove, grated ginger','1/2 tsp turmeric, salt','1 tsp olive oil','Vegetables (courgette/carrot) 150g','Optional olives / preserved lemon'],
+  steps:['Brown the chicken in oil 2-3 min.','Add onion, garlic, ginger, turmeric and a splash of water.','Cover and simmer 20 min.','Add the vegetables and cook 8-10 min more until tender.']},
+ {k:['loubia','white bean','beans'],title:'Loubia (white beans)',time:'~25 min',
+  ing:['White beans 150g (canned / soaked)','Tomato 100g + 1 tbsp paste','Onion + garlic','1 tsp paprika, 1/2 tsp cumin, salt','1 tsp olive oil'],
+  steps:['Soften onion + garlic in oil.','Add tomato, paste and spices; cook 3 min.','Add beans + water to cover and simmer 20 min until saucy.']},
+ {k:['lentil'],title:'Stewed lentils',time:'~30 min',
+  ing:['Lentils 70g','Onion + garlic','Tomato 100g','1/2 tsp cumin, salt','1 tsp olive oil'],
+  steps:['Rinse the lentils.','Soften onion + garlic, add tomato + cumin.','Add lentils + water and simmer 25-30 min until tender. Season.']},
+ {k:['mince'],title:'Spiced lean mince',time:'~10 min',
+  ing:['Lean mince 5% 150g','1/2 onion, chopped','1/2 tsp cumin, paprika, salt','Optional tomato / pepper'],
+  steps:['Dry-fry onion 2 min (no oil needed — the mince has some fat).','Add mince, break it up, cook 6-8 min until browned.','Season; add tomato / pepper for the last 3 min if using.']},
+ {k:['fish'],title:'Grilled white fish',time:'~10 min',
+  ing:['White fish 150g','1 garlic clove','Juice of 1/2 lemon','1 tsp olive oil, salt, herbs'],
+  steps:['Marinate fish in garlic, lemon, oil and salt 10 min.','Grill or pan on medium-high 3-4 min each side until it flakes easily.']},
+ {k:['chicken'],title:'Grilled chicken breast',time:'~12 min',
+  ing:['Chicken breast 150g','1 tsp olive oil','1 garlic clove, 1/2 tsp paprika, 1/2 tsp cumin','Juice of 1/2 lemon, salt'],
+  steps:['Flatten the breast a little for even cooking.','Marinate in oil, garlic, spices and lemon 10 min.','Grill / pan 4-5 min each side until no pink remains. Rest 2 min, then slice.']},
+ {k:['egg'],title:'Eggs (scrambled or boiled)',time:'~7 min',
+  ing:['3 eggs','Salt & pepper','Spray of olive oil (for scrambled)'],
+  steps:['Scrambled: beat eggs, cook on low heat stirring 2-3 min until just set.','Boiled: simmer 7 min for soft-medium or 9-10 min for hard. Cool in cold water, then peel.']},
+ {k:['tuna'],title:'Tuna plate (no cooking)',time:'2 min',
+  ing:['1 tuna can (drained 100g)','Lemon juice + drizzle of olive oil','Salad or pain complet to serve'],
+  steps:['Drain the tuna well.','Flake and season with lemon and a little olive oil.','Serve over salad or on bread. Keep to the listed weights.']}
+];
+function findRecipe(desc){ const d=desc.toLowerCase(); for(const r of RECIPES){ if(r.k.some(k=>d.includes(k))) return r; } return null; }
 const PLAN = {
   1:{name:"PUSH",focus:"Chest · Shoulders · Triceps",color:"#22c55e",rest:false,time:"18:00",
     workout:[["Bench press","4 × 6-8"],["Incline dumbbell press","3 × 8-12"],["Shoulder press","3 × 8-12"],
@@ -308,6 +368,36 @@ function toggle(id){
   const c=r.querySelector('.chk'); c.classList.toggle('on',m[id]); c.textContent=m[id]?'✓':'';
   updateRing();
 }
+function mealRow(i){
+  const e=PLAN[viewDay].meals[i], id=dkey()+':m'+i, done=LS.get('chk',{})[id];
+  return `<div class="row ${done?'done':''}" id="r-${id}">
+    <div class="chk ${done?'on':''}" onclick="toggle('${id}')">${done?'✓':''}</div>
+    <div class="meta" onclick="openMeal(${i})" style="cursor:pointer">
+      <div class="t1">${e[0]}</div><div class="t2">${e[1]}</div></div>
+    <div class="pill" onclick="openMeal(${i})" style="color:var(--grn)">📖</div></div>`;
+}
+function openMeal(i){
+  const m=PLAN[viewDay].meals[i], desc=m[1], r=findRecipe(desc);
+  let h=`<button class="x" onclick="closeModal()">✕</button><h2>${m[0]}</h2>`+
+        `<div class="hint" style="margin-bottom:6px">${desc}</div>`;
+  if(r){
+    h+=`<div class="rtitle">${r.title}${r.time?' · '+r.time:''}</div>`;
+    h+=`<b>Ingredients</b><ul>`+r.ing.map(x=>`<li>${x}</li>`).join('')+`</ul>`;
+    h+=`<b>How to cook</b><ol>`+r.steps.map(x=>`<li>${x}</li>`).join('')+`</ol>`;
+  } else {
+    h+=`<div class="hint">No cooking needed — just portion the items above to the listed weights and combine.</div>`;
+  }
+  const d=desc.toLowerCase(), tips=[];
+  if(d.includes('salad')) tips.push(SALAD);
+  if(d.includes('rice')) tips.push('Rice: rinse, boil in 2× water ~12 min until absorbed. 70g dry ≈ 210g cooked.');
+  if(d.includes('sweet potato')) tips.push('Sweet potato: cube and boil 15 min, or oven 200°C for 25-30 min.');
+  else if(d.includes('potato')) tips.push('Potato: boil 18-20 min, or oven 200°C for 30-35 min. No added oil.');
+  if(d.includes('pasta')) tips.push('Pasta: boil in salted water 8-10 min al dente. 70g dry ≈ 160g cooked.');
+  if(tips.length) h+=`<b>Sides</b>`+tips.map(t=>`<div class="hint" style="margin-top:4px">${t}</div>`).join('');
+  document.getElementById('modalBody').innerHTML=h;
+  document.getElementById('modal').classList.remove('hide');
+}
+function closeModal(){ document.getElementById('modal').classList.add('hide'); }
 function renderToday(){
   const p=PLAN[viewDay];
   document.getElementById('hday').textContent = DAYS[viewDay] + ' · ' + p.name;
@@ -337,7 +427,7 @@ function renderToday(){
   document.getElementById('cardio').innerHTML =
     p.cardio.map((e,i)=>chkRow(e[0],e[1],dkey()+':c'+i)).join('');
   document.getElementById('meals').innerHTML =
-    p.meals.map((e,i)=>chkRow(e[0],e[1],dkey()+':m'+i)).join('');
+    p.meals.map((e,i)=>mealRow(i)).join('');
   document.getElementById('saladNote').textContent = SALAD;
 
   // steps + water
